@@ -1,0 +1,25 @@
+name: Performance Stress Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'URL a estresar'
+        required: true
+        default: 'https://staging.legalia.web.app'
+  deployment_status:
+
+jobs:
+  stress-test:
+    name: Execute k6 Load Test
+    if: github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run k6 load test
+        uses: grafana/k6-action@v2
+        with:
+          filename: tests/stress/load-test.js
+          flags: --env MY_URL=${{ github.event.inputs.target_url || github.event.deployment_status.target_url }}
