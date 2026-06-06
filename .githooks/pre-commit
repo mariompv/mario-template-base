@@ -1,0 +1,48 @@
+#!/bin/sh
+
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR)
+
+if [ -z "$STAGED_FILES" ]; then
+    exit 0
+fi
+
+# Detectar proyectos Node.js
+if [ -f "package.json" ]; then
+    echo "🔍 [Git Hook Global] Detectado proyecto Node.js..."
+
+    # Prettier Check
+    if npx prettier --version >/dev/null 2>&1; then
+        PRETTIER_FILES=$(echo "$STAGED_FILES" | grep -E '\.(js|ts|jsx|tsx|css|html|json|md)$')
+        if [ ! -z "$PRETTIER_FILES" ]; then
+            echo "✨ Validando formato con Prettier..."
+            if ! npx prettier --check $PRETTIER_FILES; then
+                echo "❌ [Pre-commit Error]: Formato incorrecto. Ejecuta prettier o corrige el estilo antes de comprometer."
+                exit 1
+            fi
+        fi
+    fi
+
+    # ESLint Check
+    if npx eslint --version >/dev/null 2>&1; then
+        ESLINT_FILES=$(echo "$STAGED_FILES" | grep -E '\.(js|ts|jsx|tsx)$')
+        if [ ! -z "$ESLINT_FILES" ]; then
+            echo "eslint: Validando lints..."
+            if ! npx eslint $ESLINT_FILES; then
+                echo "❌ [Pre-commit Error]: Errores de ESLint detectados. Corrige las alertas antes de comprometer."
+                exit 1
+            fi
+        fi
+    fi
+fi
+
+# Detectar proyectos Dart/Flutter
+if [ -f "pubspec.yaml" ]; then
+    echo "🔍 [Git Hook Global] Detectado proyecto Dart/Flutter..."
+    if dart --version >/dev/null 2>&1; then
+        echo "✨ Validando formato de código..."
+        if ! dart format --output=none --set-exit-if-changed .; then
+            echo "❌ [Pre-commit Error]: Código Dart sin formatear. Ejecuta 'dart format .' antes de comprometer."
+            exit 1
+        fi
+    fi
+fi
