@@ -1,0 +1,33 @@
+name: Quality Check (Lint & Unit Tests)
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  quality-check:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Prettier Style Check
+        run: npm run format:check
+
+      - name: Run ESLint static analysis
+        run: npm run lint
+
+      - name: Run Unit/Integration Tests
+        run: npm run test
