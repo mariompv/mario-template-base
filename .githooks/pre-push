@@ -1,0 +1,24 @@
+#!/bin/sh
+
+echo "🔒 [Git Hook Local] Ejecutando auditoría de seguridad pre-push..."
+
+# Validar si Snyk está disponible y si hay un token configurado localmente
+if npx snyk --version >/dev/null 2>&1; then
+    echo "🛡️  Corriendo Snyk local scan..."
+    if ! npx snyk test --severity-threshold=high; then
+        echo "❌ [Pre-push Error]: Se encontraron vulnerabilidades críticas de seguridad en dependencias. Abortando push."
+        exit 1
+    fi
+    echo "✅ Auditoría de seguridad exitosa. No se encontraron vulnerabilidades críticas."
+else
+    echo "⚠️  Snyk CLI no está instalado localmente. Saltando auditoría de seguridad pre-push."
+fi
+
+# Correr unit tests de forma defensiva antes de subir cambios
+if npm run test --version >/dev/null 2>&1; then
+    echo "🧪 Corriendo pruebas unitarias..."
+    if ! npm run test; then
+        echo "❌ [Pre-push Error]: Las pruebas unitarias fallaron. Corrige los tests antes de subir cambios."
+        exit 1
+    fi
+fi
